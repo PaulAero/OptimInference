@@ -29,4 +29,4 @@ print(f"Précision sur le jeu de test : {test_acc}")
 
 # Sauvegarde des poids
 model.save_weights('model_weights.weights.h5')
-# ValueError: The filename must end in `.weights.h5`. Received: filepath=model_weights.h5
+# The filename must end in `.weights.h5`. Received: filepath=model_weights.h5

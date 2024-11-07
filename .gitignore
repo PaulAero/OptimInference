@@ -1,0 +1,11 @@
+# Ignorer tout par défaut
+*
+
+# Inclure les fichiers python, vhd, tcl et txt spécifiques
+!*.py
+!*.vhd
+!*.tcl
+!MNIST_project/data/mnist_sample/*.txt
+
+# Garder les dossiers pour les fichiers inclus
+!*/

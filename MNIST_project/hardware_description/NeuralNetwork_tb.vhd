@@ -1,7 +1,9 @@
+-- NeuralNetwork_tb.vhd
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 use STD.TEXTIO.ALL;
+use IEEE.STD_LOGIC_TEXTIO.ALL;
 
 entity NeuralNetwork_tb is
 end NeuralNetwork_tb;
@@ -23,17 +25,14 @@ architecture Behavioral of NeuralNetwork_tb is
     signal inputs   : SIGNED(15 downto 0) := (others => '0');
     signal outputs  : SIGNED(15 downto 0);
 
-    -- Fichier pour écrire les résultats
-    file results_file : text open write_mode is "simulation_results.txt";
-    variable results_line : line;
-
-    -- Variables pour les données d'entrée
     file image_file : text open read_mode is "data/mnist_samples/image1.txt";
-    variable image_line : line;
-    variable pixel_value : integer;
-    variable input_index : integer := 0;
+    file results_file : text open write_mode is "simulation_results.txt";
+
+    -- Type pour les données d'entrée
     type input_array is array (0 to 783) of SIGNED(15 downto 0);
-    variable input_data : input_array;
+
+    -- Signaux d'entrée
+    signal input_data : input_array;
 
 begin
     -- Génération de l'horloge
@@ -52,36 +51,52 @@ begin
             outputs => outputs
         );
 
-    -- Lecture des données d'entrée
-    load_inputs: process
+    -- Processus principal
+    stim_proc: process
+        variable image_line   : line;
+        variable pixel_value  : integer;
+        variable input_index  : integer := 0;
+        variable results_line : line;
+        variable i            : integer;
     begin
+        -- Attente initiale
+        wait for 100 ns;
+        reset <= '0';
+        report "Simulation démarrée, fichier image en cours de traitement" severity note;
+
+        -- Lecture des données d'entrée avec rapports de débogage
         while not endfile(image_file) loop
             readline(image_file, image_line);
             read(image_line, pixel_value);
-            input_data(input_index) := to_signed(pixel_value, 16);
+            report "Lecture d'une ligne de l'image, pixel_value = " & integer'image(pixel_value) severity note;
+            input_data(input_index) <= to_signed(pixel_value, 16);
             input_index := input_index + 1;
         end loop;
-        wait;
-    end process;
 
-    -- Application des stimuli et enregistrement des sorties
-    stim_proc: process
-        variable i : integer := 0;
-    begin
-        -- Attente de la fin de la lecture des entrées
-        wait for 100 ns;
-        reset <= '0';
+        report "Fin de la lecture du fichier image" severity note;
 
-        for i in 0 to 783 loop  -- Pour chaque pixel de l'image
+        -- Application des stimuli et enregistrement des sorties
+        for i in 0 to input_index - 1 loop
             inputs <= input_data(i);
-            wait for 20 ns;  -- Attente pour que la sortie soit stable
+            wait for 20 ns;
 
             -- Écriture de la sortie dans le fichier
-            write(results_line, integer'image(i) & " " & integer'image(to_integer(outputs)));
+            results_line := null;
+
+            write(results_line, string'("Index: "));
+            write(results_line, i, right, 0);
+            write(results_line, string'(", Output: "));
+            write(results_line, to_integer(outputs), right, 0);
+
             writeline(results_file, results_line);
+
+            --report "Écriture des résultats, Index = " & integer'image(i) & ", Output = " & integer'image(to_integer(outputs)) severity note;
         end loop;
+
+        report "Fin de la simulation" severity note;
 
         -- Fin de la simulation
         wait;
     end process;
+
 end Behavioral;
